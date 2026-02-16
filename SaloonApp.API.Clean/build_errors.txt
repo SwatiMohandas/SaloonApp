@@ -1,0 +1,8 @@
+C:\Users\SWATI\.gemini\antigravity\scratch\Saloon - Gravity\SaloonApp.API.Clean\Controllers\TestController.cs(83,36): error CS0029: Cannot implicitly convert type 'System.TimeSpan' to 'string' [C:\Users\SWATI\.gemini\antigravity\scratch\Saloon - Gravity\SaloonApp.API.Clean\SaloonApp.API.csproj]
+C:\Users\SWATI\.gemini\antigravity\scratch\Saloon - Gravity\SaloonApp.API.Clean\Controllers\TestController.cs(84,37): error CS0029: Cannot implicitly convert type 'System.TimeSpan' to 'string' [C:\Users\SWATI\.gemini\antigravity\scratch\Saloon - Gravity\SaloonApp.API.Clean\SaloonApp.API.csproj]
+
+Build FAILED.
+    71 Warning(s)
+    2 Error(s)
+
+Time Elapsed 00:00:02.29

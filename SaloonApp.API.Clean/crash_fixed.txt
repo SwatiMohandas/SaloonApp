@@ -1,0 +1,362 @@
+﻿Using launch settings from C:\Users\SWATI\.gemini\antigravity\scratch\Saloon - Gravity\SaloonApp.API.Clean\Properties\launchSettings.json...
+Building...
+C:\Users\SWATI\.gemini\antigravity\scratch\Saloon - Gravity\SaloonApp.API.Clean\SaloonApp.API.csproj : warning NU1903: Package 'Npgsql' 8.0.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-x9vc-6hfv-hg8c
+C:\Users\SWATI\.gemini\antigravity\scratch\Saloon - Gravity\SaloonApp.API.Clean\SaloonApp.API.csproj : warning NU1903: Package 'Npgsql' 8.0.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-x9vc-6hfv-hg8c
+--- DATABASE INITIALIZER STARTED ---
+--- CONNECTION OPENED ---
+--- OPEN_TIME MIGRATION EXECUTED ---
+--- CLOSE_TIME MIGRATION EXECUTED ---
+--- MOBILE_NUMBER MIGRATION EXECUTED ---
+--- OTP_CODE MIGRATION EXECUTED ---
+--- OTP_EXPIRY MIGRATION EXECUTED ---
+--- IS_MOBILE_VERIFIED MIGRATION EXECUTED ---
+--- GET_NEARBY_SHOPS FUNCTION UPDATED ---
+--- SCHEMA SCRIPT EXECUTED ---
+info: SaloonApp.API.Data.DatabaseInitializer[0]
+      Database execution completed successfully.
+warn: Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServer[8]
+      The ASP.NET Core developer certificate is not trusted. For information about trusting the ASP.NET Core developer certificate, see https://aka.ms/aspnet/https-trust-dev-cert.
+fail: Microsoft.Extensions.Hosting.Internal.Host[11]
+      Hosting failed to start
+      System.IO.IOException: Failed to bind to address https://localhost:44394.
+       ---> System.AggregateException: One or more errors occurred. (An attempt was made to access a socket in a way forbidden by its access permissions.) (An attempt was made to access a socket in a way forbidden by its access permissions.)
+       ---> System.Net.Sockets.SocketException (10013): An attempt was made to access a socket in a way forbidden by its access permissions.
+         at System.Net.Sockets.Socket.UpdateStatusAfterSocketErrorAndThrowException(SocketError error, Boolean disconnectOnFailure, String callerName)
+         at System.Net.Sockets.Socket.DoBind(EndPoint endPointSnapshot, SocketAddress socketAddress)
+         at System.Net.Sockets.Socket.Bind(EndPoint localEP)
+         at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketTransportOptions.CreateDefaultBoundListenSocket(EndPoint endpoint)
+         at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketConnectionListener.Bind()
+         at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketTransportFactory.BindAsync(EndPoint endpoint, CancellationToken cancellationToken)
+         at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure.TransportManager.BindAsync(EndPoint endPoint, ConnectionDelegate connectionDelegate, EndpointConfig endpointConfig, CancellationToken cancellationToken)
+         at Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerImpl.<>c__DisplayClass28_0`1.<<StartAsync>g__OnBind|0>d.MoveNext()
+      --- End of stack trace from previous location ---
+         at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.AddressBinder.BindEndpointAsync(ListenOptions endpoint, AddressBindContext context, CancellationToken cancellationToken)
+         at Microsoft.AspNetCore.Server.Kestrel.Core.LocalhostListenOptions.BindAsync(AddressBindContext context, CancellationToken cancellationToken)
+         --- End of inner exception stack trace ---
+       ---> (Inner Exception #1) System.Net.Sockets.SocketException (10013): An attempt was made to access a socket in a way forbidden by its access permissions.
+         at System.Net.Sockets.Socket.UpdateStatusAfterSocketErrorAndThrowException(SocketError error, Boolean disconnectOnFailure, String callerName)
+         at System.Net.Sockets.Socket.DoBind(EndPoint endPointSnapshot, SocketAddress socketAddress)
+         at System.Net.Sockets.Socket.Bind(EndPoint localEP)
+         at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketTransportOptions.CreateDefaultBoundListenSocket(EndPoint endpoint)
+         at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketConnectionListener.Bind()
+         at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketTransportFactory.BindAsync(EndPoint endpoint, CancellationToken cancellationToken)
+         at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure.TransportManager.BindAsync(EndPoint endPoint, ConnectionDelegate connectionDelegate, EndpointConfig endpointConfig, CancellationToken cancellationToken)
+         at Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerImpl.<>c__DisplayClass28_0`1.<<StartAsync>g__OnBind|0>d.MoveNext()
+      --- End of stack trace from previous location ---
+         at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.AddressBinder.BindEndpointAsync(ListenOptions endpoint, AddressBindContext context, CancellationToken cancellationToken)
+         at Microsoft.AspNetCore.Server.Kestrel.Core.LocalhostListenOptions.BindAsync(AddressBindContext context, CancellationToken cancellationToken)<---
+      
+         --- End of inner exception stack trace ---
+         at Microsoft.AspNetCore.Server.Kestrel.Core.LocalhostListenOptions.BindAsync(AddressBindContext context, CancellationToken cancellationToken)
+         at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.AddressBinder.AddressesStrategy.BindAsync(AddressBindContext context, CancellationToken cancellationToken)
+         at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.AddressBinder.BindAsync(ListenOptions[] listenOptions, AddressBindContext context, Func`2 useHttps, CancellationToken cancellationToken)
+         at Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerImpl.BindAsync(CancellationToken cancellationToken)
+         at Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerImpl.StartAsync[TContext](IHttpApplication`1 application, CancellationToken cancellationToken)
+         at Microsoft.AspNetCore.Hosting.GenericWebHostService.StartAsync(CancellationToken cancellationToken)
+         at Microsoft.Extensions.Hosting.Internal.Host.<StartAsync>b__15_1(IHostedService service, CancellationToken token)
+         at Microsoft.Extensions.Hosting.Internal.Host.ForeachService[T](IEnumerable`1 services, CancellationToken token, Boolean concurrent, Boolean abortOnFirstException, List`1 exceptions, Func`3 operation)
+dotnet : Unhandled 
+exception. System.IO.
+IOException: Failed 
+to bind to address ht
+tps://localhost:44394
+.
+At line:1 char:1
++ dotnet run --urls "
+https://localhost:443
+94;http://localhost:5
+149" > c ...
++ ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (Unhandl   
+ ed excep...ocalh    
+ost:44394.:Strin    
+g) [], RemoteExc    
+eption
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+ ---> System.Aggregat
+eException: One or 
+more errors 
+occurred. (An 
+attempt was made to 
+access a socket in a 
+way forbidden by its 
+access permissions.) 
+(An attempt was made 
+to access a socket 
+in a way forbidden 
+by its access 
+permissions.)
+ ---> System.Net.Sock
+ets.SocketException 
+(10013): An attempt 
+was made to access a 
+socket in a way 
+forbidden by its 
+access permissions.
+   at System.Net.Sock
+ets.Socket.UpdateStat
+usAfterSocketErrorAnd
+ThrowException(Socket
+Error error, Boolean 
+disconnectOnFailure, 
+String callerName)
+   at System.Net.Sock
+ets.Socket.DoBind(End
+Point 
+endPointSnapshot, 
+SocketAddress 
+socketAddress)
+   at System.Net.Sock
+ets.Socket.Bind(EndPo
+int localEP)
+   at Microsoft.AspNe
+tCore.Server.Kestrel.
+Transport.Sockets.Soc
+ketTransportOptions.C
+reateDefaultBoundList
+enSocket(EndPoint 
+endpoint)
+   at Microsoft.AspNe
+tCore.Server.Kestrel.
+Transport.Sockets.Soc
+ketConnectionListener
+.Bind()
+   at Microsoft.AspNe
+tCore.Server.Kestrel.
+Transport.Sockets.Soc
+ketTransportFactory.B
+indAsync(EndPoint 
+endpoint, 
+CancellationToken 
+cancellationToken)
+   at Microsoft.AspNe
+tCore.Server.Kestrel.
+Core.Internal.Infrast
+ructure.TransportMana
+ger.BindAsync(EndPoin
+t endPoint, 
+ConnectionDelegate 
+connectionDelegate, 
+EndpointConfig 
+endpointConfig, 
+CancellationToken 
+cancellationToken)
+   at Microsoft.AspNe
+tCore.Server.Kestrel.
+Core.KestrelServerImp
+l.<>c__DisplayClass28
+_0`1.<<StartAsync>g__
+OnBind|0>d.MoveNext()
+--- End of stack 
+trace from previous 
+location ---
+   at Microsoft.AspNe
+tCore.Server.Kestrel.
+Core.Internal.Address
+Binder.BindEndpointAs
+ync(ListenOptions 
+endpoint, 
+AddressBindContext 
+context, 
+CancellationToken 
+cancellationToken)
+   at Microsoft.AspNe
+tCore.Server.Kestrel.
+Core.LocalhostListenO
+ptions.BindAsync(Addr
+essBindContext 
+context, 
+CancellationToken 
+cancellationToken)
+   --- End of inner 
+exception stack 
+trace ---
+ ---> (Inner 
+Exception #1) System.
+Net.Sockets.SocketExc
+eption (10013): An 
+attempt was made to 
+access a socket in a 
+way forbidden by its 
+access permissions.
+   at System.Net.Sock
+ets.Socket.UpdateStat
+usAfterSocketErrorAnd
+ThrowException(Socket
+Error error, Boolean 
+disconnectOnFailure, 
+String callerName)
+   at System.Net.Sock
+ets.Socket.DoBind(End
+Point 
+endPointSnapshot, 
+SocketAddress 
+socketAddress)
+   at System.Net.Sock
+ets.Socket.Bind(EndPo
+int localEP)
+   at Microsoft.AspNe
+tCore.Server.Kestrel.
+Transport.Sockets.Soc
+ketTransportOptions.C
+reateDefaultBoundList
+enSocket(EndPoint 
+endpoint)
+   at Microsoft.AspNe
+tCore.Server.Kestrel.
+Transport.Sockets.Soc
+ketConnectionListener
+.Bind()
+   at Microsoft.AspNe
+tCore.Server.Kestrel.
+Transport.Sockets.Soc
+ketTransportFactory.B
+indAsync(EndPoint 
+endpoint, 
+CancellationToken 
+cancellationToken)
+   at Microsoft.AspNe
+tCore.Server.Kestrel.
+Core.Internal.Infrast
+ructure.TransportMana
+ger.BindAsync(EndPoin
+t endPoint, 
+ConnectionDelegate 
+connectionDelegate, 
+EndpointConfig 
+endpointConfig, 
+CancellationToken 
+cancellationToken)
+   at Microsoft.AspNe
+tCore.Server.Kestrel.
+Core.KestrelServerImp
+l.<>c__DisplayClass28
+_0`1.<<StartAsync>g__
+OnBind|0>d.MoveNext()
+--- End of stack 
+trace from previous 
+location ---
+   at Microsoft.AspNe
+tCore.Server.Kestrel.
+Core.Internal.Address
+Binder.BindEndpointAs
+ync(ListenOptions 
+endpoint, 
+AddressBindContext 
+context, 
+CancellationToken 
+cancellationToken)
+   at Microsoft.AspNe
+tCore.Server.Kestrel.
+Core.LocalhostListenO
+ptions.BindAsync(Addr
+essBindContext 
+context, 
+CancellationToken can
+cellationToken)<---
+
+   --- End of inner 
+exception stack 
+trace ---
+   at Microsoft.AspNe
+tCore.Server.Kestrel.
+Core.LocalhostListenO
+ptions.BindAsync(Addr
+essBindContext 
+context, 
+CancellationToken 
+cancellationToken)
+   at Microsoft.AspNe
+tCore.Server.Kestrel.
+Core.Internal.Address
+Binder.AddressesStrat
+egy.BindAsync(Address
+BindContext context, 
+CancellationToken 
+cancellationToken)
+   at Microsoft.AspNe
+tCore.Server.Kestrel.
+Core.Internal.Address
+Binder.BindAsync(List
+enOptions[] 
+listenOptions, 
+AddressBindContext 
+context, Func`2 
+useHttps, 
+CancellationToken 
+cancellationToken)
+   at Microsoft.AspNe
+tCore.Server.Kestrel.
+Core.KestrelServerImp
+l.BindAsync(Cancellat
+ionToken 
+cancellationToken)
+   at Microsoft.AspNe
+tCore.Server.Kestrel.
+Core.KestrelServerImp
+l.StartAsync[TContext
+](IHttpApplication`1 
+application, 
+CancellationToken 
+cancellationToken)
+   at Microsoft.AspNe
+tCore.Hosting.Generic
+WebHostService.StartA
+sync(CancellationToke
+n cancellationToken)
+   at Microsoft.Exten
+sions.Hosting.Interna
+l.Host.<StartAsync>b_
+_15_1(IHostedService 
+service, 
+CancellationToken 
+token)
+   at Microsoft.Exten
+sions.Hosting.Interna
+l.Host.ForeachService
+[T](IEnumerable`1 
+services, 
+CancellationToken 
+token, Boolean 
+concurrent, Boolean a
+bortOnFirstException,
+ List`1 exceptions, 
+Func`3 operation)
+   at Microsoft.Exten
+sions.Hosting.Interna
+l.Host.StartAsync(Can
+cellationToken 
+cancellationToken)
+   at Microsoft.Exten
+sions.Hosting.Hosting
+AbstractionsHostExten
+sions.RunAsync(IHost 
+host, 
+CancellationToken 
+token)
+   at Microsoft.Exten
+sions.Hosting.Hosting
+AbstractionsHostExten
+sions.RunAsync(IHost 
+host, 
+CancellationToken 
+token)
+   at Microsoft.Exten
+sions.Hosting.Hosting
+AbstractionsHostExten
+sions.Run(IHost host)
+   at Program.<Main>$
+(String[] args) in C:
+\Users\SWATI\.gemini\
+antigravity\scratch\S
+aloon - Gravity\Saloo
+nApp.API.Clean\Progra
+m.cs:line 94
