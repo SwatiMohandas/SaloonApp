@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SaloonApp.API.DTOs;
 using SaloonApp.API.Models;
 using SaloonApp.API.Repositories;
+using System.Globalization;
 using System.Security.Claims;
 
 namespace SaloonApp.API.Controllers
@@ -156,6 +157,46 @@ namespace SaloonApp.API.Controllers
 
             await _repository.AddServiceAsync(service);
             return Ok(new { message = "Service added" });
+        }
+
+        [HttpPut("{id}/hours")]
+        public async Task<IActionResult> UpsertWorkingHours(int id, [FromBody] List<ShopWorkingHourDto> hours)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdStr, out var userId) || userId <= 0)
+                return Unauthorized();
+
+            var shop = await _repository.GetShopByIdAsync(id);
+            if (shop == null) return NotFound();
+            if (shop.OwnerId != userId) return Forbid();
+
+            if (hours == null || hours.Count == 0)
+                return BadRequest("Working hours payload is empty.");
+
+            // Basic validation
+            foreach (var h in hours)
+            {
+                if (h.DayOfWeek < 0 || h.DayOfWeek > 6)
+                    return BadRequest("dayOfWeek must be between 0 and 6.");
+
+                if (!h.IsClosed)
+                {
+                    if (!TryParseTime(h.OpenTime, out _) || !TryParseTime(h.CloseTime, out _))
+                        return BadRequest("openTime/closeTime must be valid time strings like '09:00' or '09:00:00'.");
+                }
+            }
+
+            // Recommended: store as Timespan in DB layer; parse here if you want strictness
+            await _repository.UpsertShopWorkingHoursAsync(id, hours);
+
+            return Ok(new { message = "Working hours saved" });
+        }
+
+        private static bool TryParseTime(string input, out TimeSpan time)
+        {
+            // Accept "HH:mm" or "HH:mm:ss"
+            return TimeSpan.TryParseExact(input, new[] { @"hh\:mm", @"hh\:mm\:ss" },
+                CultureInfo.InvariantCulture, out time);
         }
     }
 }

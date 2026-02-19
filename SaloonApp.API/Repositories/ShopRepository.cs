@@ -1,7 +1,11 @@
 using Npgsql;
+using NpgsqlTypes;
 using SaloonApp.API.Data;
+using SaloonApp.API.DTOs;
 using SaloonApp.API.Models;
 using System.Data;
+using System.Text.Json;
+using System.Transactions;
 
 namespace SaloonApp.API.Repositories
 {
@@ -256,5 +260,41 @@ namespace SaloonApp.API.Repositories
             param.Value = value;
             command.Parameters.Add(param);
         }
+
+        public async Task UpsertShopWorkingHoursAsync(int shopId, List<ShopWorkingHourDto> hours)
+        {
+            using var connection = _context.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                using var command = connection.CreateCommand();
+                command.Transaction = transaction;
+
+                var json = System.Text.Json.JsonSerializer.Serialize(
+                    hours,
+                    new System.Text.Json.JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+                    }
+                );
+
+                command.CommandText = "SELECT public.fn_shop_set_working_hours(@shop_id, @hours::jsonb)";
+                AddParam(command, "@shop_id", shopId);
+                AddParam(command, "@hours", json);
+
+                await (command as Npgsql.NpgsqlCommand)!.ExecuteNonQueryAsync();
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
+
     }
 }

@@ -14,26 +14,50 @@ namespace SaloonApp.API.Repositories
             _context = context;
         }
 
-        public async Task<int> JoinQueueAsync(Booking booking)
+        //public async Task<int> JoinQueueAsync(Booking booking)
+        //{
+        //    using var connection = _context.CreateConnection();
+        //    connection.Open();
+        //    using var command = connection.CreateCommand();
+
+        //    // For now simple insert. ADO.NET
+        //    command.CommandText = @"
+        //        INSERT INTO bookings (shop_id, user_id, customer_name, status, service_id) 
+        //        VALUES (@shopId, @userId, @customerName, 'waiting', @serviceId) 
+        //        RETURNING id";
+
+        //    AddParam(command, "@shopId", booking.ShopId);
+        //    AddParam(command, "@userId", booking.UserId == 0 ? DBNull.Value : booking.UserId);
+        //    AddParam(command, "@customerName", booking.CustomerName);
+        //    AddParam(command, "@serviceId", booking.ServiceId ?? (object)DBNull.Value);
+
+        //    var result = await (command as NpgsqlCommand).ExecuteScalarAsync();
+        //    return Convert.ToInt32(result);
+        //}
+
+        public async Task<(int BookingId, DateTime AppointmentTime)> JoinQueueAsync(Booking booking)
         {
             using var connection = _context.CreateConnection();
             connection.Open();
+
             using var command = connection.CreateCommand();
-            
-            // For now simple insert. ADO.NET
+
             command.CommandText = @"
-                INSERT INTO bookings (shop_id, user_id, customer_name, status, service_id) 
-                VALUES (@shopId, @userId, @customerName, 'waiting', @serviceId) 
-                RETURNING id";
+    SELECT o_booking_id, o_appointment_time
+    FROM public.fn_join_queue(@shopId, @userId, @customerName, @serviceId);";
 
             AddParam(command, "@shopId", booking.ShopId);
-            AddParam(command, "@userId", booking.UserId == 0 ? DBNull.Value : booking.UserId);
+            AddParam(command, "@userId", booking.UserId);
             AddParam(command, "@customerName", booking.CustomerName);
             AddParam(command, "@serviceId", booking.ServiceId ?? (object)DBNull.Value);
 
-            var result = await (command as NpgsqlCommand).ExecuteScalarAsync();
-            return Convert.ToInt32(result);
+            using var reader = await (command as NpgsqlCommand)!.ExecuteReaderAsync();
+            if (!await reader.ReadAsync())
+                throw new Exception("Failed to join queue.");
+
+            return (reader.GetInt32(0), reader.GetDateTime(1));
         }
+
 
         public async Task<IEnumerable<Booking>> GetQueueByShopIdAsync(int shopId)
         {
@@ -41,7 +65,7 @@ namespace SaloonApp.API.Repositories
             using var connection = _context.CreateConnection();
             connection.Open();
             using var command = connection.CreateCommand();
-            
+
             command.CommandText = @"
                 SELECT b.*, s.name as service_name, s.duration_mins 
                 FROM bookings b 
@@ -69,8 +93,8 @@ namespace SaloonApp.API.Repositories
                 // Populate service info if available for calculating wait time
                 if (booking.ServiceId != null)
                 {
-                    booking.Service = new Service 
-                    { 
+                    booking.Service = new Service
+                    {
                         Name = reader.GetString(reader.GetOrdinal("service_name")),
                         DurationMins = reader.GetInt32(reader.GetOrdinal("duration_mins"))
                     };
@@ -86,7 +110,7 @@ namespace SaloonApp.API.Repositories
             using var connection = _context.CreateConnection();
             connection.Open();
             using var command = connection.CreateCommand();
-            
+
             command.CommandText = "CALL update_queue_status(@id, @status)";
             AddParam(command, "@id", id);
             AddParam(command, "@status", status);
@@ -99,7 +123,7 @@ namespace SaloonApp.API.Repositories
             using var connection = _context.CreateConnection();
             connection.Open();
             using var command = connection.CreateCommand();
-            
+
             // Move to back of line by updating joined_at to NOW
             command.CommandText = "UPDATE bookings SET joined_at = NOW() WHERE id = @id";
             AddParam(command, "@id", id);
@@ -113,7 +137,7 @@ namespace SaloonApp.API.Repositories
             using var connection = _context.CreateConnection();
             connection.Open();
             using var command = connection.CreateCommand();
-            
+
             command.CommandText = @"
                 SELECT b.*, s.name as service_name, s.duration_mins, sh.name as shop_name, sh.city as shop_city
                 FROM bookings b 
@@ -136,7 +160,8 @@ namespace SaloonApp.API.Repositories
                     Status = reader.GetString(reader.GetOrdinal("status")),
                     JoinedAt = reader.GetDateTime(reader.GetOrdinal("joined_at")),
                     ServiceId = reader.IsDBNull(reader.GetOrdinal("service_id")) ? null : reader.GetInt32(reader.GetOrdinal("service_id")),
-                    Shop = new Shop { 
+                    Shop = new Shop
+                    {
                         Id = reader.GetInt32(reader.GetOrdinal("shop_id")),
                         Name = reader.GetString(reader.GetOrdinal("shop_name")),
                         City = reader.GetString(reader.GetOrdinal("shop_city"))
@@ -145,8 +170,8 @@ namespace SaloonApp.API.Repositories
 
                 if (booking.ServiceId != null)
                 {
-                    booking.Service = new Service 
-                    { 
+                    booking.Service = new Service
+                    {
                         Name = reader.GetString(reader.GetOrdinal("service_name")),
                         DurationMins = reader.GetInt32(reader.GetOrdinal("duration_mins"))
                     };
