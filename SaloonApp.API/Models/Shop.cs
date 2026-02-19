@@ -41,4 +41,24 @@ namespace SaloonApp.API.Models
         public TimeOnly? CloseTime { get; set; }
 
     }
+    public class ReviewDto
+    {
+        public int Id { get; set; }
+        public int ShopId { get; set; }
+        public int UserId { get; set; }
+        public int Rating { get; set; }
+        public string? Comment { get; set; }
+        public DateTime CreatedAt { get; set; }
+
+        // Optional (if you join users table)
+        public string? UserName { get; set; }
+    }
+
+    public class CreateReviewDto
+    {
+        public int ShopId { get; set; }
+        public int Rating { get; set; }          // 1..5
+        public string? Comment { get; set; }
+    }
+
 }

@@ -1,5 +1,6 @@
 using Npgsql;
 using SaloonApp.API.Data;
+using SaloonApp.API.DTOs;
 using SaloonApp.API.Models;
 using System.Data;
 
@@ -35,6 +36,7 @@ namespace SaloonApp.API.Repositories
         //    return Convert.ToInt32(result);
         //}
 
+
         public async Task<(int BookingId, DateTime AppointmentTime)> JoinQueueAsync(Booking booking)
         {
             using var connection = _context.CreateConnection();
@@ -43,20 +45,49 @@ namespace SaloonApp.API.Repositories
             using var command = connection.CreateCommand();
 
             command.CommandText = @"
-    SELECT o_booking_id, o_appointment_time
-    FROM public.fn_join_queue(@shopId, @userId, @customerName, @serviceId);";
+SELECT o_booking_id, o_appointment_time
+FROM public.fn_join_queue(@shopId, @userId, @customerName, @serviceId, @appointmentTime);
+";
 
             AddParam(command, "@shopId", booking.ShopId);
             AddParam(command, "@userId", booking.UserId);
             AddParam(command, "@customerName", booking.CustomerName);
             AddParam(command, "@serviceId", booking.ServiceId ?? (object)DBNull.Value);
+            //AddParam(command, "@appointmentTime", booking.AppointmentTime.HasValue ? booking.AppointmentTime.Value : (object)DBNull.Value);
+            var apptParam = new NpgsqlParameter("@appointmentTime", NpgsqlTypes.NpgsqlDbType.TimestampTz);
+            apptParam.Value = booking.AppointmentTime.HasValue ? booking.AppointmentTime.Value.UtcDateTime : DBNull.Value;
+            command.Parameters.Add(apptParam);
 
-            using var reader = await (command as NpgsqlCommand)!.ExecuteReaderAsync();
-            if (!await reader.ReadAsync())
-                throw new Exception("Failed to join queue.");
 
-            return (reader.GetInt32(0), reader.GetDateTime(1));
+
+            Console.WriteLine(command.CommandText);
+            foreach (NpgsqlParameter p in command.Parameters)
+                Console.WriteLine($"{p.ParameterName} = {p.Value} ({p.NpgsqlDbType})");
+
+            try
+            {
+                using var reader = await (command as NpgsqlCommand)!.ExecuteReaderAsync();
+                if (!await reader.ReadAsync())
+                    throw new Exception("Failed to book.");
+
+                var bookingId = reader.GetInt32(0);
+                var utc = reader.GetDateTime(1);  // appointment_time from postgres (UTC)
+
+                // 🔴 CONVERT HERE
+                var india = TimeZoneInfo.ConvertTimeFromUtc(
+                    utc,
+                    TimeZoneInfo.FindSystemTimeZoneById("India Standard Time")
+                );
+
+                return (reader.GetInt32(0), india);
+            }
+            catch (PostgresException ex) when (ex.SqlState == "P0001" || ex.SqlState == "P0002")
+            {
+                // Return message to controller
+                throw new BusinessException(ex.MessageText);
+            }
         }
+
 
 
         public async Task<IEnumerable<Booking>> GetQueueByShopIdAsync(int shopId)
@@ -181,6 +212,78 @@ namespace SaloonApp.API.Repositories
             }
             return results;
         }
+
+        public async Task<List<QueueSlotRow>> GetQueueSlotsRawAsync(int shopId, DateTime date)
+        {
+            using var connection = _context.CreateConnection();
+            connection.Open();
+
+            using var command = connection.CreateCommand();
+
+            command.CommandText = @"
+                WITH wh AS (
+                    SELECT w.is_closed, w.open_time, w.close_time
+                    FROM shop_working_hours w
+                    WHERE w.shop_id = @shopId
+                      AND w.day_of_week = EXTRACT(DOW FROM @date::date)::int
+                    LIMIT 1
+                )
+                SELECT
+                    COALESCE(wh.is_closed, true) AS is_closed,
+                    wh.open_time,
+                    wh.close_time,
+                    b.id AS booking_id,
+                    b.appointment_time,
+                    s.duration_mins
+                FROM wh
+                LEFT JOIN bookings b
+                       ON b.shop_id = @shopId
+                      AND b.status IN ('waiting','in_progress','scheduled')
+                      AND b.appointment_time IS NOT NULL
+                      -- ✅ IST day filter (Asia/Kolkata)
+                      AND (b.appointment_time AT TIME ZONE 'Asia/Kolkata')::date = @date::date
+                LEFT JOIN services s ON s.id = b.service_id
+                ORDER BY b.appointment_time ASC, b.joined_at ASC;
+            ";
+
+            AddParam(command, "@shopId", shopId);
+            AddParam(command, "@date", date.Date);
+
+            var indiaTz = GetIndiaTz();
+            var rows = new List<QueueSlotRow>();
+
+            using var reader = await (command as Npgsql.NpgsqlCommand)!.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                DateTime? appointmentIst = null;
+
+                if (!reader.IsDBNull(4))
+                {
+                    var utc = reader.GetDateTime(4); // timestamptz -> UTC DateTime
+                    appointmentIst = TimeZoneInfo.ConvertTimeFromUtc(utc, indiaTz);
+                }
+
+                rows.Add(new QueueSlotRow
+                {
+                    IsClosed = !reader.IsDBNull(0) && reader.GetBoolean(0),
+                    OpenTime = reader.IsDBNull(1) ? (TimeSpan?)null : reader.GetTimeSpan(1),
+                    CloseTime = reader.IsDBNull(2) ? (TimeSpan?)null : reader.GetTimeSpan(2),
+                    BookingId = reader.IsDBNull(3) ? (int?)null : reader.GetInt32(3),
+                    AppointmentTime = appointmentIst, // ✅ IST for UI
+                    DurationMins = reader.IsDBNull(5) ? (int?)null : reader.GetInt32(5),
+                });
+            }
+
+            return rows;
+        }
+
+        private static TimeZoneInfo GetIndiaTz()
+        {
+            try { return TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"); } // Windows
+            catch { return TimeZoneInfo.FindSystemTimeZoneById("Asia/Kolkata"); }      // Linux
+        }
+
+
 
         private void AddParam(IDbCommand command, string name, object value)
         {

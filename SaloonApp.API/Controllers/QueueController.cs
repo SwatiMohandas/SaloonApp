@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using SaloonApp.API.Data;
 using SaloonApp.API.DTOs;
 using SaloonApp.API.Models;
 using SaloonApp.API.Repositories;
@@ -60,15 +62,22 @@ namespace SaloonApp.API.Controllers
                 ShopId = dto.ShopId,
                 UserId = finalUserId ?? 0, // 0 or null handled in Repo logic
                 CustomerName = customerName,
-                ServiceId = dto.ServiceId
+                ServiceId = dto.ServiceId,
+                AppointmentTime = dto.AppointmentTime ?? null
             };
 
             // Fix Repo logic to handle 0 as null if needed or just pass. 
             // Repo does: AddParam(command, "@userId", booking.UserId == 0 ? DBNull.Value : booking.UserId);
             // So 0 is fine.
-
-            var id = await _repository.JoinQueueAsync(booking);
-            return Ok(new { id, message = "Joined queue successfully", estimatedWait = "Calculated on client for MVP" });
+            try
+            {
+                var result = await _repository.JoinQueueAsync(booking);
+                return Ok(new { id = result.BookingId, appointmentTime = result.AppointmentTime, message = "Booked successfully" });
+            }
+            catch (BusinessException ex)
+            {
+                return Conflict(new { message = ex.Message }); // 409
+            }
         }
 
         [Authorize(Roles = "owner")]
@@ -111,6 +120,69 @@ namespace SaloonApp.API.Controllers
 
             await _repository.UpdateStatusAsync(id, "cancelled");
             return Ok(new { message = "Booking cancelled successfully" });
+        }
+
+        // GET /api/queue/slots?shopId=11&date=2026-02-19
+        [HttpGet("slots")]
+        public async Task<IActionResult> GetSlots([FromQuery] int shopId, [FromQuery] DateTime date)
+        {
+            if (shopId <= 0) return BadRequest("shopId is required.");
+            if (date == default) return BadRequest("date is required in yyyy-MM-dd format.");
+
+            // Slot duration (minutes) for UI buttons
+            const int slotStepMinutes = 15;
+
+            var rows = await _repository.GetQueueSlotsRawAsync(shopId, date.Date);
+
+            // If shop_working_hours missing, return empty slots
+            if (rows.Count == 0)
+                return Ok(new { slots = Array.Empty<object>() });
+
+            var meta = rows[0];
+
+            // Closed day
+            if (meta.IsClosed)
+                return Ok(new { slots = Array.Empty<object>() });
+
+            var open = meta.OpenTime ?? TimeSpan.FromHours(9);
+            var close = meta.CloseTime ?? TimeSpan.FromHours(21);
+
+            // Filter actual bookings rows (those which have appointment_time)
+            var bookings = rows
+                .Where(r => r.AppointmentTime.HasValue && r.DurationMins.HasValue && r.DurationMins.Value > 0)
+                .Select(r => new
+                {
+                    Start = DateTime.SpecifyKind(r.AppointmentTime!.Value, DateTimeKind.Utc).ToUniversalTime(),
+                    End = DateTime.SpecifyKind(r.AppointmentTime!.Value, DateTimeKind.Utc).ToUniversalTime()
+                          .AddMinutes(r.DurationMins!.Value)
+                })
+                .ToList();
+
+            // Create slots
+            var slots = new List<object>();
+            var t = open;
+
+            while (t < close)
+            {
+                var slotLocal = date.Date + t;
+
+                // IMPORTANT: If your appointment_time is stored as local time (not UTC),
+                // then DO NOT convert to UTC here. Use direct compare instead.
+                // I'll do direct compare (most salon apps store local time).
+                var slotStart = slotLocal;
+
+                bool blocked = bookings.Any(b => slotStart >= b.Start && slotStart < b.End);
+
+                slots.Add(new
+                {
+                    time = t.ToString(@"hh\:mm"),
+                    available = !blocked
+                });
+
+                t = t.Add(TimeSpan.FromMinutes(slotStepMinutes));
+            }
+
+            return Ok(new { slots });
         }
     }
 }

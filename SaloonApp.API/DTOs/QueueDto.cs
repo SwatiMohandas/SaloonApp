@@ -23,4 +23,17 @@ namespace SaloonApp.API.DTOs
         public string Time { get; set; } // "14:00"
         public bool Available { get; set; }
     }
+
+    public class QueueSlotRow
+    {
+        public bool IsClosed { get; set; }
+        public TimeSpan? OpenTime { get; set; }
+        public TimeSpan? CloseTime { get; set; }
+
+        public int? BookingId { get; set; }
+        public DateTime? AppointmentTime { get; set; }
+        public int? DurationMins { get; set; }
+    }
+
+
 }

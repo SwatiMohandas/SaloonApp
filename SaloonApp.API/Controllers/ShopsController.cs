@@ -198,5 +198,42 @@ namespace SaloonApp.API.Controllers
             return TimeSpan.TryParseExact(input, new[] { @"hh\:mm", @"hh\:mm\:ss" },
                 CultureInfo.InvariantCulture, out time);
         }
+
+        [Route("api/reviews")]
+
+        [HttpPost]
+        public async Task<IActionResult> CreateOrUpdate([FromBody] CreateReviewDto dto)
+        {
+            if (dto.ShopId <= 0) return BadRequest(new { message = "ShopId is required." });
+            if (dto.Rating < 1 || dto.Rating > 5) return BadRequest(new { message = "Rating must be between 1 and 5." });
+
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdStr, out var userId) || userId <= 0)
+                return Unauthorized();
+
+            var saved = await _repository.UpsertReviewAsync(userId, dto);
+
+            return Ok(new
+            {
+                message = "Review saved",
+                review = saved
+            });
+        }
+
+        [HttpGet("shop/{shopId}")]
+        public async Task<IActionResult> GetByShop(int shopId)
+        {
+            if (shopId <= 0) return BadRequest(new { message = "Invalid shopId" });
+
+            var result = await _repository.GetReviewsByShopIdAsync(shopId);
+
+            return Ok(new
+            {
+                shopId,
+                avgRating = result.AvgRating,
+                totalReviews = result.TotalCount,
+                reviews = result.Reviews
+            });
+        }
     }
 }

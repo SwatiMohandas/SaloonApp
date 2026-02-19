@@ -24,10 +24,10 @@ namespace SaloonApp.API.Repositories
             using var connection = _context.CreateConnection();
             connection.Open();
             using var command = connection.CreateCommand();
-            
+
             // Call the Postgres function we created: get_nearby_shops
             command.CommandText = "SELECT * FROM get_nearby_shops(@lat, @lon, @radius)";
-            
+
             AddParam(command, "@lat", lat);
             AddParam(command, "@lon", lon);
             AddParam(command, "@radius", radiusKm);
@@ -55,7 +55,7 @@ namespace SaloonApp.API.Repositories
         {
             using var connection = _context.CreateConnection();
             connection.Open();
-            
+
             Shop? shop = null;
 
             // Get Shop Details
@@ -63,7 +63,7 @@ namespace SaloonApp.API.Repositories
             {
                 command.CommandText = "SELECT * FROM shops WHERE id = @id";
                 AddParam(command, "@id", id);
-                
+
                 using var reader = await (command as NpgsqlCommand).ExecuteReaderAsync();
                 if (await reader.ReadAsync())
                 {
@@ -93,7 +93,7 @@ namespace SaloonApp.API.Repositories
                 {
                     command.CommandText = "SELECT * FROM services WHERE shop_id = @id";
                     AddParam(command, "@id", id);
-                    
+
                     using var reader = await (command as NpgsqlCommand).ExecuteReaderAsync();
                     while (await reader.ReadAsync())
                     {
@@ -296,5 +296,101 @@ namespace SaloonApp.API.Repositories
         }
 
 
+        public async Task<(decimal AvgRating, int TotalCount, List<ReviewDto> Reviews)> GetReviewsByShopIdAsync(int shopId)
+        {
+            using var connection = _context.CreateConnection();
+            connection.Open();
+
+            using var command = connection.CreateCommand();
+
+            // If you have users table with name column, keep the join.
+            // If not, remove join and UserName selection.
+            command.CommandText = @"
+        SELECT
+            r.id,
+            r.shop_id,
+            r.user_id,
+            r.rating,
+            r.comment,
+            r.created_at,
+            u.name AS user_name
+        FROM reviews r
+        LEFT JOIN users u ON u.id = r.user_id
+        WHERE r.shop_id = @shopId
+        ORDER BY r.created_at DESC;
+
+        SELECT
+            COALESCE(AVG(rating), 0)::numeric(10,2) AS avg_rating,
+            COUNT(*)::int AS total_count
+        FROM reviews
+        WHERE shop_id = @shopId;
+    ";
+
+            AddParam(command, "@shopId", shopId);
+
+            var reviews = new List<ReviewDto>();
+
+            using var reader = await (command as NpgsqlCommand)!.ExecuteReaderAsync();
+
+            // First result set: list
+            while (await reader.ReadAsync())
+            {
+                reviews.Add(new ReviewDto
+                {
+                    Id = reader.GetInt32(0),
+                    ShopId = reader.GetInt32(1),
+                    UserId = reader.GetInt32(2),
+                    Rating = reader.GetInt32(3),
+                    Comment = reader.IsDBNull(4) ? null : reader.GetString(4),
+                    CreatedAt = reader.IsDBNull(5) ? DateTime.MinValue : reader.GetDateTime(5),
+                    UserName = reader.IsDBNull(6) ? null : reader.GetString(6),
+                });
+            }
+
+            // Second result set: summary
+            decimal avgRating = 0;
+            int totalCount = reviews.Count;
+
+            if (await reader.NextResultAsync() && await reader.ReadAsync())
+            {
+                avgRating = reader.IsDBNull(0) ? 0 : reader.GetDecimal(0);
+                totalCount = reader.IsDBNull(1) ? 0 : reader.GetInt32(1);
+            }
+
+            return (avgRating, totalCount, reviews);
+        }
+
+        public async Task<ReviewDto> UpsertReviewAsync(int userId, CreateReviewDto dto)
+        {
+            using var connection = _context.CreateConnection();
+            connection.Open();
+
+            using var command = connection.CreateCommand();
+
+            command.CommandText = @"
+        INSERT INTO reviews (shop_id, user_id, rating, comment, created_at)
+        VALUES (@shopId, @userId, @rating, @comment, CURRENT_TIMESTAMP)
+        RETURNING id, shop_id, user_id, rating, comment, created_at;
+    ";
+
+            AddParam(command, "@shopId", dto.ShopId);
+            AddParam(command, "@userId", userId);
+            AddParam(command, "@rating", dto.Rating);
+            AddParam(command, "@comment", string.IsNullOrWhiteSpace(dto.Comment) ? (object)DBNull.Value : dto.Comment.Trim());
+
+            using var reader = await (command as NpgsqlCommand)!.ExecuteReaderAsync();
+            if (!await reader.ReadAsync())
+                throw new Exception("Failed to add review.");
+
+            return new ReviewDto
+            {
+                Id = reader.GetInt32(0),
+                ShopId = reader.GetInt32(1),
+                UserId = reader.GetInt32(2),
+                Rating = reader.GetInt32(3),
+                Comment = reader.IsDBNull(4) ? null : reader.GetString(4),
+                CreatedAt = reader.GetDateTime(5),
+            };
+        }
     }
 }
