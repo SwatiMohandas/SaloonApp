@@ -56,6 +56,8 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.UseStaticFiles();
+
 // Configure the HTTP request pipeline.
 // Always enable Swagger for this MVP to ensure visibility
 app.UseSwagger();

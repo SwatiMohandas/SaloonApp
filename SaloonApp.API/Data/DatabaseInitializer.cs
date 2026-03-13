@@ -42,6 +42,15 @@ namespace SaloonApp.API.Data
                         using var alterCmd = new NpgsqlCommand("ALTER TABLE shops ADD COLUMN IF NOT EXISTS image_path VARCHAR(255);", connection);
                         alterCmd.ExecuteNonQuery();
                     } catch { /* Ignore if it fails or already exists */ }
+
+                    // Migration for Working Hours
+                    try {
+                        using var alterCmdTime1 = new NpgsqlCommand("ALTER TABLE shops ADD COLUMN IF NOT EXISTS open_time TIME;", connection);
+                        alterCmdTime1.ExecuteNonQuery();
+                        
+                        using var alterCmdTime2 = new NpgsqlCommand("ALTER TABLE shops ADD COLUMN IF NOT EXISTS close_time TIME;", connection);
+                        alterCmdTime2.ExecuteNonQuery();
+                    } catch { /* Ignore if it fails or already exists */ }
                     
                     _logger.LogInformation("Database execution completed successfully.");
                 }

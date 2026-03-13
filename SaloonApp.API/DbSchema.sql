@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS shops (
     rating DECIMAL(3,2) DEFAULT 0,
     is_verified BOOLEAN DEFAULT FALSE,
     image_path VARCHAR(255),
+    open_time TIME,
+    close_time TIME,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -64,12 +66,12 @@ CREATE INDEX IF NOT EXISTS idx_reviews_shop_id ON reviews(shop_id);
 -- Function: Search Nearby Shops (Haversine Formula)
 DROP FUNCTION IF EXISTS get_nearby_shops(DECIMAL, DECIMAL, DECIMAL);
 CREATE OR REPLACE FUNCTION get_nearby_shops(lat DECIMAL, lon DECIMAL, radius_km DECIMAL)
-RETURNS TABLE (id INT, name VARCHAR, city VARCHAR, rating DECIMAL, distance_km DECIMAL, image_path VARCHAR) AS $$
+RETURNS TABLE (id INT, name VARCHAR, city VARCHAR, rating DECIMAL, distance_km DECIMAL, image_path VARCHAR, open_time TIME, close_time TIME) AS $$
 BEGIN
     RETURN QUERY
     SELECT s.id, s.name, s.city, s.rating,
     CAST((6371 * acos(cos(radians(lat)) * cos(radians(s.latitude)) * cos(radians(s.longitude) - radians(lon)) + sin(radians(lat)) * sin(radians(s.latitude)))) AS DECIMAL(10,2)) AS distance_km,
-    s.image_path
+    s.image_path, s.open_time, s.close_time
     FROM shops s
     WHERE (6371 * acos(cos(radians(lat)) * cos(radians(s.latitude)) * cos(radians(s.longitude) - radians(lon)) + sin(radians(lat)) * sin(radians(s.latitude)))) < radius_km
     ORDER BY distance_km;
