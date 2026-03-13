@@ -75,7 +75,9 @@ namespace SaloonApp.API.Controllers
                 Address = dto.Address,
                 Latitude = dto.Latitude,
                 Longitude = dto.Longitude,
-                ImagePath = imagePath
+                ImagePath = imagePath,
+                OpenTime = TimeSpan.Parse(dto.OpenTime ?? "00:00:00"),
+                CloseTime = TimeSpan.Parse(dto.CloseTime ?? "00:00:00")
             };
 
             var id = await _repository.CreateShopAsync(shop);
